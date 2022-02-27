@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,26 +7,43 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     private Vector2 _moveDirection;
+    private float _jumpDirection;
+    
     public float moveSpeed = 2;
     public float maxForwardSpeed = 8;
     public float turnSpeed = 100;
     private float _desiredSpeed;
     private float _forwardSpeed;
+    private float jumpSpeed = 30000f;
+    private float groundRayDistance = 2f;
+    private float _jumpEffort = 0;
 
     private const float GroundAccel = 5;
     private const float GroundDecel = 25;
 
     private Animator _anim;
+    private Rigidbody _rigidBody;
 
+    private bool _readyJump = false;
+    private bool _onGround = true;
+    
     bool IsMoveInput
     {
         get { return !Mathf.Approximately(_moveDirection.sqrMagnitude, 0f); }
     }
+    
+    // Called when move input key is pressed
     public void OnMove(InputAction.CallbackContext context)
     {
         _moveDirection = context.ReadValue<Vector2>();
     }
 
+    // Called when jump input key is pressed
+    public void OnJump(InputAction.CallbackContext context)
+    {
+        _jumpDirection = context.ReadValue<float>();
+    }
+    
     void Move(Vector2 direction)
     {
         float turnAmount = direction.x;
@@ -51,16 +69,70 @@ public class PlayerController : MonoBehaviour
         
         //transform.Translate(direction.x * moveSpeed * Time.deltaTime, 0, direction.y * moveSpeed * Time.deltaTime);
     }
+
+    void Jump(float direction)
+    {
+        if (direction > 0 && _onGround)
+        {
+            _anim.SetBool("ReadyJump", true);
+            _readyJump = true;
+            _jumpEffort += Time.deltaTime;
+        }
+        else if(_readyJump)
+        {
+            _anim.SetBool("Launch", true);
+            _anim.SetBool("ReadyJump", false);
+            _readyJump = false;
+        }
+        
+    }
+
+    public void Launch()
+    {
+        _anim.applyRootMotion = false;
+        _rigidBody.AddForce(0, jumpSpeed * Mathf.Clamp(_jumpEffort,1,3), 0);
+        _anim.SetBool("Launch", false);
+    }
+
+    public void Land()
+    {
+        _anim.SetBool("Land", false);
+        _anim.applyRootMotion = true;
+        _anim.SetBool("Launch", false);
+        _jumpEffort = 0;
+    }
     
     // Start is called before the first frame update
     void Start()
     {
         _anim = this.GetComponent<Animator>();
+        _rigidBody = this.GetComponent<Rigidbody>();
     }
 
     // Update is called once per frame
     void Update()
     {
         Move(_moveDirection);
+        Jump(_jumpDirection);
+
+        // casting from character to ground in order to find out if we are in the air
+        RaycastHit hit;
+        Ray ray = new Ray(transform.position + Vector3.up * groundRayDistance * 0.5f, -Vector3.up);
+        if (Physics.Raycast(ray, out hit, groundRayDistance))
+        {
+            if (!_onGround)
+            {
+                _onGround = true;
+                _anim.SetFloat("LandingVelocity",_rigidBody.velocity.magnitude);
+                _anim.SetBool("Land", true);
+                _anim.SetBool("Falling", false);
+            }
+        } else
+        {
+            _onGround = false;
+            _anim.SetBool("Falling", true);
+            _anim.applyRootMotion = false;
+        }
+        Debug.DrawRay(transform.position + Vector3.up * groundRayDistance * 0.5f, -Vector3.up * groundRayDistance, Color.red);
     }
 }
