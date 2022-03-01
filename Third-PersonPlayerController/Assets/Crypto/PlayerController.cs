@@ -26,6 +26,26 @@ public class PlayerController : MonoBehaviour
 
     private bool _readyJump = false;
     private bool _onGround = true;
+
+    public Transform weapon;
+    public Transform hand;
+    public Transform hip;
+    
+    public void PickupGun()
+    {
+        weapon.SetParent(hand);
+        weapon.localPosition = new Vector3(-0.02f,0.09f,0.1f);
+        weapon.localRotation = Quaternion.Euler(-78.55f,-167.51f,291.32f);
+        weapon.localScale = new Vector3(1, 1, 1);
+    }
+
+    public void PutDownGun()
+    {
+        weapon.SetParent(hip);
+        weapon.localPosition = new Vector3(-0.13f,-0.13f,-0.01f);
+        weapon.localRotation = Quaternion.Euler(-95.77f,-90.2f,264.52f);
+        weapon.localScale = new Vector3(1, 1, 1);
+    }
     
     bool IsMoveInput
     {
