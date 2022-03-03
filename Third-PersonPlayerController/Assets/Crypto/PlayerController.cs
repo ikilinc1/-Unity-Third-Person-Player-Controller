@@ -7,6 +7,7 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     private Vector2 _moveDirection;
+    private Vector2 _lookDirection;
     private float _jumpDirection;
     
     public float moveSpeed = 2;
@@ -30,7 +31,8 @@ public class PlayerController : MonoBehaviour
     public Transform weapon;
     public Transform hand;
     public Transform hip;
-    
+    public Transform spine;
+    private Vector2 lastLookDirection;
     public void PickupGun()
     {
         weapon.SetParent(hand);
@@ -58,10 +60,32 @@ public class PlayerController : MonoBehaviour
         _moveDirection = context.ReadValue<Vector2>();
     }
 
+    // Called for deciding look direction
+    public void OnLook(InputAction.CallbackContext context)
+    {
+        _lookDirection = context.ReadValue<Vector2>();
+    }
+    
     // Called when jump input key is pressed
     public void OnJump(InputAction.CallbackContext context)
     {
         _jumpDirection = context.ReadValue<float>();
+    }
+    
+    // Called when fire input key is pressed
+    public void OnFire(InputAction.CallbackContext context)
+    {
+        if ((int)context.ReadValue<float>() == 1 && _anim.GetBool("Armed"))
+        {
+            _anim.SetTrigger("Fire");
+        }
+       
+    }
+    
+    // Called when q input key is pressed
+    public void OnArmed(InputAction.CallbackContext context)
+    {
+        _anim.SetBool("Armed",!_anim.GetBool("Armed"));
     }
     
     void Move(Vector2 direction)
@@ -127,6 +151,14 @@ public class PlayerController : MonoBehaviour
     {
         _anim = this.GetComponent<Animator>();
         _rigidBody = this.GetComponent<Rigidbody>();
+    }
+
+    // Used to apply rotation to body after the animations
+    private void LateUpdate()
+    {
+        //keep track of last look direction to apply later and stop animation stutter
+        lastLookDirection += new Vector2(_lookDirection.x, -(_lookDirection.y));
+        spine.Rotate(lastLookDirection.y, lastLookDirection.x,0);
     }
 
     // Update is called once per frame
