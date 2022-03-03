@@ -18,6 +18,8 @@ public class PlayerController : MonoBehaviour
     private float jumpSpeed = 30000f;
     private float groundRayDistance = 2f;
     private float _jumpEffort = 0;
+    public float xSensitivity = 0.5f;
+    public float ySensitivity = 0.5f;
 
     private const float GroundAccel = 5;
     private const float GroundDecel = 25;
@@ -157,8 +159,10 @@ public class PlayerController : MonoBehaviour
     private void LateUpdate()
     {
         //keep track of last look direction to apply later and stop animation stutter
-        lastLookDirection += new Vector2(_lookDirection.x, -(_lookDirection.y));
-        spine.Rotate(lastLookDirection.y, lastLookDirection.x,0);
+        lastLookDirection += new Vector2( -_lookDirection.y * ySensitivity,_lookDirection.x * xSensitivity);
+        lastLookDirection.x = Mathf.Clamp(lastLookDirection.x, -15, 15);
+        lastLookDirection.y = Mathf.Clamp(lastLookDirection.y, -30, 60);
+        spine.localEulerAngles = lastLookDirection;
     }
 
     // Update is called once per frame
