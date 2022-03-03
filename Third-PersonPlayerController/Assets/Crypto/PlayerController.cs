@@ -32,6 +32,8 @@ public class PlayerController : MonoBehaviour
 
     private bool _readyJump = false;
     private bool _onGround = true;
+    private bool _escapePressed = false;
+    private bool _cursorIsLocked = true;
 
     public Transform weapon;
     public Transform hand;
@@ -76,6 +78,18 @@ public class PlayerController : MonoBehaviour
     public void OnJump(InputAction.CallbackContext context)
     {
         _jumpDirection = context.ReadValue<float>();
+    }
+    
+    public void OnEscape(InputAction.CallbackContext context)
+    {
+        if ((int) context.ReadValue<float>() == 1)
+        {
+            _escapePressed = true;
+        }
+        else
+        {
+            _escapePressed = false;
+        }
     }
     
     // Called when fire input key is pressed
@@ -159,12 +173,31 @@ public class PlayerController : MonoBehaviour
         _rigidBody = this.GetComponent<Rigidbody>();
     }
 
+    public void UpdateCursorLock()
+    {
+        if (_escapePressed)
+        {
+            _cursorIsLocked = false;
+        }
+
+        if (_cursorIsLocked)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+    }
+    
     // Used to apply rotation to body after the animations
     private void LateUpdate()
     {
         //keep track of last look direction to apply later and stop animation stutter
         _lastLookDirection += new Vector2( -_lookDirection.y * ySensitivity,_lookDirection.x * xSensitivity);
-        _lastLookDirection.x = Mathf.Clamp(_lastLookDirection.x, -15, 15);
+        _lastLookDirection.x = Mathf.Clamp(_lastLookDirection.x, -30, 30);
         if (_anim.GetBool("Armed"))
         {
             _lastLookDirection.y = Mathf.Clamp(_lastLookDirection.y, 0, 90);
@@ -179,6 +212,8 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        UpdateCursorLock();
+        
         Move(_moveDirection);
         Jump(_jumpDirection);
 
