@@ -7,5 +7,5 @@ Used Packages (Unity Registry)
 -Cinemachine
 -Input System
 
-
+Unity version-->2020.3.26f1
 Current proggress --> Finished.
