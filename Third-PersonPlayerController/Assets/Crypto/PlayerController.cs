@@ -26,6 +26,9 @@ public class PlayerController : MonoBehaviour
 
     private Animator _anim;
     private Rigidbody _rigidBody;
+    public LineRenderer laser;
+    public GameObject crosshair;
+    public GameObject crossLight;
 
     private bool _readyJump = false;
     private bool _onGround = true;
@@ -34,12 +37,13 @@ public class PlayerController : MonoBehaviour
     public Transform hand;
     public Transform hip;
     public Transform spine;
-    private Vector2 lastLookDirection;
+    private Vector2 _lastLookDirection;
+    
     public void PickupGun()
     {
         weapon.SetParent(hand);
-        weapon.localPosition = new Vector3(-0.02f,0.09f,0.1f);
-        weapon.localRotation = Quaternion.Euler(-78.55f,-167.51f,291.32f);
+        weapon.localPosition = new Vector3(-0.013f,0.077f,0.034f);
+        weapon.localRotation = Quaternion.Euler(-77.551f,-307.442f,430.439f);
         weapon.localScale = new Vector3(1, 1, 1);
     }
 
@@ -159,10 +163,17 @@ public class PlayerController : MonoBehaviour
     private void LateUpdate()
     {
         //keep track of last look direction to apply later and stop animation stutter
-        lastLookDirection += new Vector2( -_lookDirection.y * ySensitivity,_lookDirection.x * xSensitivity);
-        lastLookDirection.x = Mathf.Clamp(lastLookDirection.x, -15, 15);
-        lastLookDirection.y = Mathf.Clamp(lastLookDirection.y, -30, 60);
-        spine.localEulerAngles = lastLookDirection;
+        _lastLookDirection += new Vector2( -_lookDirection.y * ySensitivity,_lookDirection.x * xSensitivity);
+        _lastLookDirection.x = Mathf.Clamp(_lastLookDirection.x, -15, 15);
+        if (_anim.GetBool("Armed"))
+        {
+            _lastLookDirection.y = Mathf.Clamp(_lastLookDirection.y, 0, 90);
+        }
+        else
+        {
+            _lastLookDirection.y = Mathf.Clamp(_lastLookDirection.y, -30, 30);
+        }
+        spine.localEulerAngles = _lastLookDirection;
     }
 
     // Update is called once per frame
@@ -171,6 +182,34 @@ public class PlayerController : MonoBehaviour
         Move(_moveDirection);
         Jump(_jumpDirection);
 
+        // casting a laser for aiming
+        if (_anim.GetBool("Armed"))
+        {
+            laser.gameObject.SetActive(true);
+            //crosshair.gameObject.SetActive(true);
+            crossLight.gameObject.SetActive(true);
+            RaycastHit laserHit;
+            Ray laserRay = new Ray(laser.transform.position, laser.transform.forward);
+            if (Physics.Raycast(laserRay, out laserHit))
+            {
+                laser.SetPosition(1, laser.transform.InverseTransformPoint(laserHit.point));
+                Vector3 crosshairLocation = Camera.main.WorldToScreenPoint(laserHit.point);
+                //crosshair.transform.position = crosshairLocation;
+                crossLight.transform.localPosition = new Vector3(0, 0, laser.GetPosition(1).z * 0.9f);
+            }
+            else
+            {
+                //crosshair.gameObject.SetActive(false);
+                crossLight.gameObject.SetActive(false);
+            }
+        }
+        else
+        {
+            laser.gameObject.SetActive(true);
+            crosshair.gameObject.SetActive(false);
+            crossLight.gameObject.SetActive(false);
+        }
+        
         // casting from character to ground in order to find out if we are in the air
         RaycastHit hit;
         Ray ray = new Ray(transform.position + Vector3.up * groundRayDistance * 0.5f, -Vector3.up);
