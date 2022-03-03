@@ -34,13 +34,34 @@ public class PlayerController : MonoBehaviour
     private bool _onGround = true;
     private bool _escapePressed = false;
     private bool _cursorIsLocked = true;
+    public bool isDead = false;
+    private bool _firing = false;
+
+    private int _health = 100;
 
     public Transform weapon;
     public Transform hand;
     public Transform hip;
     public Transform spine;
     private Vector2 _lastLookDirection;
-    
+
+    public void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.tag == "Bullet")
+        {
+            _health -= 10;
+            _anim.SetTrigger("Hit");
+            if (_health <= 0)
+            {
+                isDead = true;
+                _anim.SetBool("Dead", true);
+            }
+            {
+                
+            }
+        }
+    }
+
     public void PickupGun()
     {
         weapon.SetParent(hand);
@@ -95,9 +116,11 @@ public class PlayerController : MonoBehaviour
     // Called when fire input key is pressed
     public void OnFire(InputAction.CallbackContext context)
     {
+        _firing = false;
         if ((int)context.ReadValue<float>() == 1 && _anim.GetBool("Armed"))
         {
             _anim.SetTrigger("Fire");
+            _firing = true;
         }
        
     }
@@ -195,18 +218,21 @@ public class PlayerController : MonoBehaviour
     // Used to apply rotation to body after the animations
     private void LateUpdate()
     {
-        //keep track of last look direction to apply later and stop animation stutter
-        _lastLookDirection += new Vector2( -_lookDirection.y * ySensitivity,_lookDirection.x * xSensitivity);
-        _lastLookDirection.x = Mathf.Clamp(_lastLookDirection.x, -30, 30);
-        if (_anim.GetBool("Armed"))
+        if (_anim.GetBool("Dead") == false)
         {
-            _lastLookDirection.y = Mathf.Clamp(_lastLookDirection.y, 0, 90);
+            //keep track of last look direction to apply later and stop animation stutter
+            _lastLookDirection += new Vector2( -_lookDirection.y * ySensitivity,_lookDirection.x * xSensitivity);
+            _lastLookDirection.x = Mathf.Clamp(_lastLookDirection.x, -30, 30);
+            if (_anim.GetBool("Armed"))
+            {
+                _lastLookDirection.y = Mathf.Clamp(_lastLookDirection.y, 0, 90);
+            }
+            else
+            {
+                _lastLookDirection.y = Mathf.Clamp(_lastLookDirection.y, -30, 30);
+            }
+            spine.localEulerAngles = _lastLookDirection;
         }
-        else
-        {
-            _lastLookDirection.y = Mathf.Clamp(_lastLookDirection.y, -30, 30);
-        }
-        spine.localEulerAngles = _lastLookDirection;
     }
 
     // Update is called once per frame
@@ -231,6 +257,11 @@ public class PlayerController : MonoBehaviour
                 Vector3 crosshairLocation = Camera.main.WorldToScreenPoint(laserHit.point);
                 //crosshair.transform.position = crosshairLocation;
                 crossLight.transform.localPosition = new Vector3(0, 0, laser.GetPosition(1).z * 0.9f);
+
+                if (_firing && laserHit.collider.gameObject.tag == "Orb")
+                {
+                    laserHit.collider.gameObject.GetComponent<AIController>().BlowUp();
+                }
             }
             else
             {
@@ -240,7 +271,7 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            laser.gameObject.SetActive(true);
+            laser.gameObject.SetActive(false);
             crosshair.gameObject.SetActive(false);
             crossLight.gameObject.SetActive(false);
         }
