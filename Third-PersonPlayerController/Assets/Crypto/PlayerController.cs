@@ -54,6 +54,7 @@ public class PlayerController : MonoBehaviour
             if (_health <= 0)
             {
                 isDead = true;
+                _anim.SetLayerWeight(1,0);
                 _anim.SetBool("Dead", true);
             }
             {
@@ -177,8 +178,11 @@ public class PlayerController : MonoBehaviour
     public void Launch()
     {
         _anim.applyRootMotion = false;
-        _rigidBody.AddForce(0, jumpSpeed * Mathf.Clamp(_jumpEffort,1,3), 0);
         _anim.SetBool("Launch", false);
+        _onGround = false;
+        
+        _rigidBody.AddForce(0, jumpSpeed * Mathf.Clamp(_jumpEffort,1,3), 0);
+        _rigidBody.AddForce(this.transform.forward * _forwardSpeed * 1000);
     }
 
     public void Land()
@@ -239,6 +243,11 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         UpdateCursorLock();
+
+        if (isDead)
+        {
+            return;
+        }
         
         Move(_moveDirection);
         Jump(_jumpDirection);
