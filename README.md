@@ -3,9 +3,9 @@
 Third-Person Controller that uses animation based movement with new input system,
 also includes basic ai and health system for player and ai orbs.
 
-Used Packages (Unity Registry)
--Cinemachine
--Input System
+Used Packages (Unity Registry)  
+ -Cinemachine  
+ -Input System  
 
-Unity version-->2020.3.26f1
+Unity version-->2020.3.26f1  
 Current proggress --> Finished.
